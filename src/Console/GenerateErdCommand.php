@@ -12,7 +12,7 @@ class GenerateErdCommand extends Command
     protected $signature = 'easyerd:generate 
                            {--type=both : Type of ERD to generate (image, text, both)}
                            {--output= : Custom output path for the ERD files}
-                           {--format=png : Image format (png, svg, jpg, pdf)}
+                           {--format=pdf : Image format (png, svg, jpg, pdf)}
                            {--width=4000 : Image width for pixel-based formats}
                            {--height=3000 : Image height for pixel-based formats}
                            {--dpi=300 : DPI for image output}

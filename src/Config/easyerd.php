@@ -3,7 +3,7 @@
 return [
     'output_path' => env('EASYERD_OUTPUT_PATH', storage_path('app/erd')),
     
-    'image_format' => env('EASYERD_IMAGE_FORMAT', 'svg'),
+    'image_format' => env('EASYERD_IMAGE_FORMAT', 'pdf'),
     
     'include_models' => env('EASYERD_INCLUDE_MODELS', true),
     
@@ -12,6 +12,8 @@ return [
     'graphviz_path' => env('EASYERD_GRAPHVIZ_PATH', 'dot'),
     
     'orthogonal_splines' => env('EASYERD_ORTHOGONAL_SPLINES', false),
+    
+    'grid_splines' => env('EASYERD_GRID_SPLINES', 'spline'), // Grid-friendly curves
     
     'dark_mode' => env('EASYERD_DARK_MODE', false),
     
@@ -23,11 +25,11 @@ return [
     
     'dpi' => env('EASYERD_DPI', 300),
     
-    'font_size' => env('EASYERD_FONT_SIZE', 12),
+    'font_size' => env('EASYERD_FONT_SIZE', 11), // Slightly smaller for grid
     
-    'nodesep' => env('EASYERD_NODESEP', 1.2),
+    'nodesep' => env('EASYERD_NODESEP', 2.0), // Wider spacing for grid
     
-    'ranksep' => env('EASYERD_RANKSEP', 1.8),
+    'ranksep' => env('EASYERD_RANKSEP', 1.8), // Compact vertical for grid,
     
     'table_styles' => [
         'primary_key' => 'bgcolor="lightyellow"',

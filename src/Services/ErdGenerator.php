@@ -46,7 +46,7 @@ class ErdGenerator
         $tempFile = tempnam(sys_get_temp_dir(), 'erd_');
         file_put_contents($tempFile, $dotContent);
         
-        $format = $format ?? $this->config['image_format'] ?? 'png';
+        $format = $format ?? $this->config['image_format'] ?? 'pdf';
         $outputPath = $outputPath ?? "erd.{$format}";
         $graphvizPath = $this->config['graphviz_path'] ?? 'dot';
         
@@ -410,18 +410,36 @@ class ErdGenerator
     protected function generateDotContent($data)
     {
         $dot = "digraph ERD {\n";
-        $dot .= "    rankdir=TB;\n";
         
-        $splines = $this->config['orthogonal_splines'] ?? false ? 'ortho' : 'spline';
+        // Use dot algorithm with grid-friendly settings
+        $layout = $this->config['layout_algorithm'] ?? 'dot';
+        $dot .= "    layout={$layout};\n";
+        
+        // Top-to-bottom with some horizontal organization
+        $rankdir = $this->config['rank_direction'] ?? 'TB';
+        $dot .= "    rankdir={$rankdir};\n";
+        
+        // Grid-optimized spacing
+        $nodesep = $this->config['nodesep'] ?? 2.0; // Wider horizontal spacing
+        $ranksep = $this->config['ranksep'] ?? 1.8; // Compact vertical spacing 
+        $dot .= "    nodesep={$nodesep};\n";
+        $dot .= "    ranksep={$ranksep};\n";
+        
+        // Use splines for smooth connections
+        $splines = $this->config['grid_splines'] ?? 'spline';
         $dot .= "    splines={$splines};\n";
         
-        $dot .= "    nodesep=1.0;\n";
-        $dot .= "    ranksep=1.5;\n";
-        $dot .= "    node [shape=plaintext];\n";
-        $dot .= "    edge [arrowhead=vee];\n\n";
+        // Enhanced node styling with better spacing
+        $dot .= "    node [shape=plaintext, fontname=\"Arial, Helvetica, sans-serif\", margin=\"0.15,0.1\"];\n";
+        $dot .= "    edge [arrowhead=vee, fontname=\"Arial, Helvetica, sans-serif\", fontsize=\"9\"];\n\n";
         
-        // Group tables by relationship clusters for better layout
-        $tableGroups = $this->groupTablesByRelationships($data['tables'], $data['relationships']);
+        // Global styling
+        $fontSize = $this->config['font_size'] ?? 11;
+        $dot .= "    fontname=\"Arial, Helvetica, sans-serif\";\n";
+        $dot .= "    fontsize={$fontSize};\n\n";
+        
+        // Create grid-based layout
+        $gridLayout = $this->createGridLayout($data['tables'], $data['relationships']);
         
         foreach ($data['tables'] as $tableName => $table) {
             $sanitizedName = $this->sanitizeDotIdentifier($tableName);
@@ -456,25 +474,23 @@ class ErdGenerator
             $dot .= "    >];\n\n";
         }
         
-        // Create subgraphs for better layout organization
-        $groupIndex = 0;
-        foreach ($tableGroups as $groupName => $tablesInGroup) {
-            if (count($tablesInGroup) > 1) {
-                $dot .= "    subgraph cluster_{$groupIndex} {\n";
-                $dot .= "        label=\"{$groupName}\";\n";
-                $dot .= "        style=filled;\n";
-                $dot .= "        color=lightgrey;\n";
-                $dot .= "        rank=same;\n";
-                
-                foreach ($tablesInGroup as $tableName) {
+        // Create grid-based layout
+        $gridLayout = $this->createGridLayout($data['tables'], $data['relationships']);
+        
+        // Apply grid constraints for organized flow
+        foreach ($gridLayout['grid_rows'] as $row => $tables) {
+            if (count($tables) > 1) {
+                $dot .= "    { rank=same; ";
+                foreach ($tables as $tableName) {
                     $sanitizedName = $this->sanitizeDotIdentifier($tableName);
-                    $dot .= "        {$sanitizedName};\n";
+                    $dot .= "{$sanitizedName} ";
                 }
-                
-                $dot .= "    }\n\n";
-                $groupIndex++;
+                $dot .= "}\n";
             }
         }
+        $dot .= "\n";
+        
+        // Add individual table nodes
         
         foreach ($data['relationships'] as $relationship) {
             // Ensure table names are valid DOT identifiers
@@ -482,7 +498,11 @@ class ErdGenerator
             $toTable = $this->sanitizeDotIdentifier($relationship['to_table']);
             $fromColumn = $this->sanitizeDotLabel($relationship['from_column']);
             
-            $dot .= "    {$fromTable} -> {$toTable} [label=\"{$fromColumn}\"];\n";
+            // Clean relationship styling for better visibility
+            $relationshipType = $relationship['type'] ?? 'belongs_to';
+            $edgeStyle = $this->getGridEdgeStyle($relationshipType);
+            
+            $dot .= "    {$fromTable} -> {$toTable} [label=\"{$fromColumn}\"{$edgeStyle}];\n";
         }
         
         $dot .= "}\n";
@@ -565,5 +585,88 @@ class ErdGenerator
         }
         
         return $styles[$type] ?? '';
+    }
+    
+    protected function createGridLayout($tables, $relationships)
+    {
+        // Create a clean grid layout that avoids clustering issues
+        $gridRows = [];
+        $processedTables = [];
+        $currentRow = 0;
+        
+        // Calculate centrality for better placement
+        $centrality = [];
+        $referenceCounts = [];
+        $fromCounts = [];
+        
+        foreach ($relationships as $relationship) {
+            $toTable = $relationship['to_table'];
+            $fromTable = $relationship['from_table'];
+            
+            if (!isset($referenceCounts[$toTable])) {
+                $referenceCounts[$toTable] = 0;
+            }
+            if (!isset($fromCounts[$fromTable])) {
+                $fromCounts[$fromTable] = 0;
+            }
+            
+            $referenceCounts[$toTable]++;
+            $fromCounts[$fromTable]++;
+        }
+        
+        // Calculate centrality (connection density)
+        foreach ($tables as $tableName => $table) {
+            $refCount = isset($referenceCounts[$tableName]) ? $referenceCounts[$tableName] : 0;
+            $fromCount = isset($fromCounts[$tableName]) ? $fromCounts[$tableName] : 0;
+            $centrality[$tableName] = $refCount + $fromCount;
+        }
+        
+        // Sort by centrality for row organization
+        arsort($centrality);
+        
+        // Create grid rows based on centrality
+        $tablesPerRow = 4; // Default grid width
+        $totalTables = count($tables);
+        
+        // Optimize table count per row based on total tables
+        if ($totalTables <= 6) {
+            $tablesPerRow = 3;
+        } elseif ($totalTables <= 10) {
+            $tablesPerRow = 4;
+        } elseif ($totalTables <= 15) {
+            $tablesPerRow = 5;
+        } else {
+            $tablesPerRow = 6;
+        }
+        
+        // Build grid from centrality-sorted tables
+        $sortedTables = array_keys($centrality);
+        
+        foreach ($sortedTables as $index => $tableName) {
+            $row = intval($index / $tablesPerRow);
+            if (!isset($gridRows[$row])) {
+                $gridRows[$row] = [];
+            }
+            $gridRows[$row][] = $tableName;
+            $processedTables[$tableName] = true;
+        }
+        
+        return [
+            'grid_rows' => $gridRows,
+            'tables_per_row' => $tablesPerRow
+        ];
+    }
+    
+    protected function getGridEdgeStyle($relationshipType)
+    {
+        // Simple, clean styling for grid layout
+        $styles = [
+            'belongs_to' => ',color="darkblue",fontcolor="darkblue",fontsize=9,weight=1',
+            'has_many' => ',color="darkgreen",fontcolor="darkgreen",fontsize=9,weight=1,style=dashed',
+            'has_one' => ',color="darkorange",fontcolor="darkorange",fontsize=9,weight=1,style=dotted',
+            'belongs_to_many' => ',color="purple",fontcolor="purple",fontsize=9,weight=2',
+        ];
+        
+        return $styles[$relationshipType] ?? ',color="darkblue",fontcolor="darkblue",fontsize=9,weight=1';
     }
 }
