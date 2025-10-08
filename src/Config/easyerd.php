@@ -1,35 +1,35 @@
 <?php
 
 return [
-    'output_path' => env('EASYERD_OUTPUT_PATH', storage_path('app/erd')),
+    'output_path' => storage_path('app/erd'),
     
-    'image_format' => env('EASYERD_IMAGE_FORMAT', 'pdf'),
+    'image_format' => 'pdf',
     
-    'include_models' => env('EASYERD_INCLUDE_MODELS', true),
+    'include_models' => true,
     
-    'include_migrations' => env('EASYERD_INCLUDE_MIGRATIONS', true),
+    'include_migrations' => true,
     
-    'graphviz_path' => env('EASYERD_GRAPHVIZ_PATH', 'dot'),
+    'graphviz_path' => 'dot',
     
-    'orthogonal_splines' => env('EASYERD_ORTHOGONAL_SPLINES', false),
+    'orthogonal_splines' => false,
     
-    'grid_splines' => env('EASYERD_GRID_SPLINES', 'spline'), // Grid-friendly curves
+    'grid_splines' => 'spline', // Grid-friendly curves
     
-    'dark_mode' => env('EASYERD_DARK_MODE', false),
+    'dark_mode' => false,
     
     
     // New high-resolution settings
-    'image_width' => env('EASYERD_IMAGE_WIDTH', 4000),
+    'image_width' => 4000,
     
-    'image_height' => env('EASYERD_IMAGE_HEIGHT', 3000),
+    'image_height' => 3000,
     
-    'dpi' => env('EASYERD_DPI', 300),
+    'dpi' => 600,
     
-    'font_size' => env('EASYERD_FONT_SIZE', 11), // Slightly smaller for grid
+    'font_size' => 11, // Slightly smaller for grid
     
-    'nodesep' => env('EASYERD_NODESEP', 2.0), // Wider spacing for grid
+    'nodesep' => 3.0, // Wider spacing for grid
     
-    'ranksep' => env('EASYERD_RANKSEP', 1.8), // Compact vertical for grid,
+    'ranksep' => 2.8, // Compact vertical for grid,
     
     'table_styles' => [
         'primary_key' => 'bgcolor="lightyellow"',
