@@ -3,6 +3,13 @@
     "description": "A Laravel package to generate ERD diagrams from models and migrations",
     "type": "laravel-package",
     "license": "MIT",
+    "version": "1.0.0",
+    "keywords": ["laravel", "package", "erd", "diagram", "generator"],
+    "homepage": "https://github.com/dgtlss/easyerd",
+    "support": {
+        "issues": "https://github.com/dgtlss/easyerd/issues",
+        "source": "https://github.com/dgtlss/easyerd"
+    },
     "authors": [
         {
             "name": "Nathan Langer",
