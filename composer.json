@@ -3,7 +3,6 @@
     "description": "A Laravel package to generate ERD diagrams from models and migrations",
     "type": "laravel-package",
     "license": "MIT",
-    "version": "1.0.0",
     "keywords": ["laravel", "package", "erd", "diagram", "generator"],
     "homepage": "https://github.com/dgtlss/easyerd",
     "support": {
@@ -18,12 +17,12 @@
     ],
     "require": {
         "php": "^8.3",
-        "illuminate/support": "^11.0|^12.0",
-        "illuminate/console": "^11.0|^12.0",
-        "illuminate/database": "^11.0|^12.0"
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "illuminate/console": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^9.0|^10.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^10.0|^11.0"
     },
     "autoload": {
@@ -35,6 +34,9 @@
         "psr-4": {
             "Dgtlss\\EasyErd\\Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "test": "@php vendor/bin/phpunit"
     },
     "extra": {
         "laravel": {

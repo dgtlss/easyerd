@@ -1,0 +1,30 @@
+name: Tests
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+        framework:
+          # Laravel 11 has upstream advisories; allow it only in this isolated compatibility job.
+          - { laravel: '^11.0', testbench: '^9.0', options: '--no-security-blocking' }
+          - { laravel: '^12.0', testbench: '^10.0', options: '' }
+          - { laravel: '^13.0', testbench: '^11.0', options: '' }
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.framework.laravel }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo_sqlite
+          coverage: none
+      - run: composer update --prefer-dist --no-interaction --with "laravel/framework:${{ matrix.framework.laravel }}" --with "orchestra/testbench:${{ matrix.framework.testbench }}" ${{ matrix.framework.options }}
+      - run: composer validate --strict
+      - run: composer test

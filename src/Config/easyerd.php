@@ -8,6 +8,18 @@ return [
     'include_models' => true,
     
     'include_migrations' => true,
+
+    // Migration parsing works without a database. Use 'database' to inspect live metadata.
+    'source' => 'migrations',
+
+    'connection' => null,
+
+    'mermaid_path' => base_path('docs/erd.md'),
+
+    'tables' => [],
+
+    // Number of relationship hops from the selected tables. Null keeps only the selection.
+    'depth' => null,
     
     'graphviz_path' => 'dot',
     
@@ -58,4 +70,4 @@ return [
         'has_one' => '<-',
         'belongs_to_many' => '<->',
     ],
-    ];
+];
